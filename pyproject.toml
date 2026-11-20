@@ -1,0 +1,25 @@
+[project]
+name = "hay-export-agents"
+version = "0.1.0"
+description = "Demo: governed multi-agent system for a hay exporter (MCP + Codex SDK)"
+requires-python = ">=3.10"
+dependencies = [
+  "openai-codex==0.171.0",
+  "mcp==2.3.0",
+  "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+hay = "hayagents.cli:main"
+
+[tool.setuptools]
+packages = ["hayagents"]
+
+[tool.setuptools.package-data]
+hayagents = ["data/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,58 @@
+# Hard rules. Plain data, read by plain Python. No AI decides these.
+version: "2026-11-20.1"
+
+currency: AUD
+
+# Who must approve a purchase order, by amount (AUD, inclusive lower bound).
+approval_tiers:
+  - name: auto
+    min: 0
+    max_exclusive: 10000
+    approver: null            # approved automatically, still logged
+  - name: department_manager
+    min: 10000
+    max_exclusive: 50000
+    approver: procurement_manager
+  - name: ceo
+    min: 50000
+    max_exclusive: null
+    approver: ceo              # department manager AND ceo
+
+# Tools each agent may see and call. Anything not listed does not exist for that agent.
+agent_tools:
+  ceo_agent:
+    - get_goal
+    - get_shortfall
+    - submit_task_plan
+  procurement_agent:
+    - get_task
+    - get_shortfall
+    - list_eligible_stock
+    - list_grower_quotes
+    - read_vendor_messages
+    - get_skill
+    - propose_purchase_order
+    - send_message
+    - suggest_skill_edit
+  production_agent:
+    - get_task
+    - send_message
+  operator:                    # the trusted CLI, acting for a human after approval
+    - create_purchase_order
+    - get_purchase_order
+
+# Per-goal budgets (tokens are what Codex reports after each turn).
+budgets:
+  token_limit: 400000
+  tool_call_limit: 40
+
+# Model routing: which model each agent uses, and why. Logged on every run.
+model_routing:
+  ceo_agent:
+    model: gpt-6.2-sol
+    reasoning_effort: medium
+    why: "planning across departments needs more reasoning"
+  procurement_agent:
+    model: gpt-6.2-sol
+    reasoning_effort: low
+    why: "reads data and fills a typed proposal; cheaper setting is enough"

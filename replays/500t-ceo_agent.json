@@ -1,0 +1,64 @@
+{
+  "agent": "ceo_agent",
+  "goal_id": "G-001",
+  "task_id": null,
+  "prompt": "Plan goal G-001.",
+  "calls": [
+    {
+      "call_id": "exec-a742a9a3-8ec5-4dd5-8912-f4a132d697cb",
+      "tool": "get_shortfall",
+      "args": {
+        "goal_id": "G-001"
+      },
+      "status": "completed"
+    },
+    {
+      "call_id": "exec-7c6a61c4-2372-4528-a71c-c840696be51a",
+      "tool": "get_goal",
+      "args": {
+        "goal_id": "G-001"
+      },
+      "status": "completed"
+    },
+    {
+      "call_id": "exec-4c7728ad-b1b3-41cf-af48-758dd465c46e",
+      "tool": "submit_task_plan",
+      "args": {
+        "tasks": [
+          {
+            "department": "procurement",
+            "title": "Buy 100 t of oaten hay for Bowmans",
+            "quantity_t": 100,
+            "deadline": "2026-12-02",
+            "criterion": "po_covers_shortfall"
+          },
+          {
+            "department": "production",
+            "title": "Confirm Bowmans capacity and QC release",
+            "quantity_t": null,
+            "deadline": "2026-12-04",
+            "criterion": "site_capacity_confirmed",
+            "depends_on": "G-001-T1"
+          },
+          {
+            "department": "sales_fulfilment",
+            "title": "Confirm carrier booking and ETA",
+            "quantity_t": null,
+            "deadline": "2026-12-04",
+            "criterion": "booking_confirmed"
+          },
+          {
+            "department": "finance",
+            "title": "Check the purchase commitment against budget",
+            "quantity_t": null,
+            "deadline": "2026-12-02",
+            "criterion": "commitment_checked"
+          }
+        ]
+      },
+      "status": "completed"
+    }
+  ],
+  "final": "**G-001** is 100 tonnes short of oaten hay for Saigon Dairy Co.  \n**2 December** \u2014 Procurement to buy 100 tonnes. Finance to check the purchase commitment against budget.  \n**4 December** \u2014 After procurement, Production to confirm Bowmans capacity and QC release. Sales Fulfilment to confirm the carrier booking and ETA.  \nThe submitted plan awaits your approval.",
+  "tokens": 47272
+}
