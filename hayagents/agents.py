@@ -128,10 +128,12 @@ def _result_text(out) -> str:
     return " ".join(c.get("text", "") for c in out.get("content", []) if isinstance(c, dict)).replace("\n", " ")
 
 
-def replay(record: str, *, goal_id: str, task_id: str | None, show=print) -> dict:
-    """Re-send recorded tool calls through the real MCP server. No model, no network."""
+def replay(record: str, *, agent: str, goal_id: str, task_id: str | None, show=print) -> dict:
+    """Re-send recorded tool calls through the real MCP server. No model, no network.
+    The role comes from the trusted caller, never from the recording file."""
     rec = json.loads((REPLAYS / record).read_text())
-    agent = rec["agent"]
+    if rec.get("agent") != agent or agent not in PROMPTS:
+        raise RuntimeError(f"recording is for {rec.get('agent')!r}, expected agent {agent!r}: refusing to replay")
     show("  REPLAY: recorded model decisions, live MCP server, gate and database")
     calls = [(c["tool"], c["args"]) for c in rec["calls"]]
     results = mcp_client.call_many(agent, calls, goal_id=goal_id, task_id=task_id)

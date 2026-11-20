@@ -62,10 +62,14 @@ flowchart TD
   approves, through the operator path, and the server loads the approved terms itself.
 - **Rules live in code, not prompts.** Spending tiers, specs, the shortfall maths and "no bank changes"
   are Python and YAML. A prompt can be talked out of a rule; the gate can't.
+- **Two signatures for big orders.** Under $10k is automatic, $10k to $50k needs the procurement manager,
+  over $50k needs the procurement manager **and** the CEO on the same terms. The tier is recomputed from the
+  amount at approval and again at execution, never trusted from storage.
 - **Approval is bound to exact terms.** The approval stores a fingerprint of supplier, tonnes, price,
   amount, currency, delivery date and spec version. Any change after approval needs a new approval.
 - **Rechecked at execution.** If stock changes between approval and execution (`hay release-lot LOT-B2`),
-  the order is refused: the approval was for 100 t, the gap is now 70 t.
+  the order is refused: the approval was for 100 t, the gap is now 70 t. The grower's quote (price,
+  date, capacity) is rechecked too, and the CEO approves the exact plan version they reviewed.
 - **Safe retries.** Each approved order has an idempotency key with a UNIQUE constraint, and the PO and its
   audit row are written in one transaction.
 - **Least privilege for agents.** An agent only sees its own tools, only works on its own task, and can
@@ -92,13 +96,13 @@ has been tested, so this demo does **not** claim vendor portability yet.
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 codex login            # once; the SDK reuses your Codex / ChatGPT sign-in
-make test              # 43 tests, no model needed
+make test              # 53 tests, no model needed
 hay demo               # live, about 2 minutes
 hay demo --replay      # offline
 hay demo --tonnes 450  # change the goal: the shortfall becomes 50 t, nothing else edited
 ```
 
-Step by step: `hay reset`, `hay goal`, `hay plan`, `hay approve-plan`, `hay procure`,
+Step by step: `hay reset`, `hay goal`, `hay plan`, `hay approve-plan --version 1`, `hay procure`,
 `hay approve P-001 --as procurement_manager`, `hay execute P-001 --lose-reply`, `hay execute P-001`,
 `hay verify`, `hay report`, `hay audit`. Try `hay attack` and `hay release-lot LOT-B2` too.
 

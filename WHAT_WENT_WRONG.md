@@ -32,3 +32,23 @@ Real problems hit while building this, in order.
 7. **The recorded replay broke after fix 6.** Replay re-sent the old long title and the new rule
    refused it. That's the gate doing its job, but it meant recordings must be refreshed whenever a rule
    changes. Re-recorded both scenarios (500 t and 450 t).
+
+## Found by a code review (Codex, max reasoning), all fixed with a test each
+
+8. **One CEO signature released an order that needed two.** Over $50k the policy says procurement manager
+   *and* CEO, but the code treated the CEO alone as enough, and execution trusted the stored tier. Now each
+   tier lists every signer, signatures are collected on the same terms, and the tier is recomputed.
+9. **A tampered replay file could borrow operator powers.** Replay took the agent role from the recording.
+   Now the trusted caller says which agent it is, and a mismatched recording is refused.
+10. **The CEO could approve a plan version they never saw.** `approve-plan` now needs `--version`, and a
+    newer draft means "review it again".
+11. **Two proposals could lead to two orders for one demand.** The one-PO rule only covered draft POs.
+    Now it covers every PO this system creates, and a task can have only one proposal waiting.
+12. **A changed quote slipped through.** If the grower cut capacity after approval, the order still went
+    ahead. Execution now rechecks the quote's price, date and capacity.
+13. **Verification could use another task's order.** It now checks the PO made from this task's own
+    approved proposal, and its signed terms. One open goal per demand.
+14. **The inbox wasn't scoped.** The procurement agent could read messages about unrelated deals, and an
+    agent started without a task skipped the scope checks. Both now refused.
+15. **An audit row could go missing.** A change could commit just before its audit row. The change and its
+    audit row now commit in the same transaction.

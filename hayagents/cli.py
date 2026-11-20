@@ -58,7 +58,7 @@ def cmd_goal(a):
 def _agent(agent, goal_id, task_id, prompt, replay, tag):
     rec = f"{tag}-{agent}.json"
     if replay:
-        return agents.replay(rec, goal_id=goal_id, task_id=task_id)
+        return agents.replay(rec, agent=agent, goal_id=goal_id, task_id=task_id)
     return agents.run(agent, goal_id, task_id, prompt, record=rec)
 
 
@@ -80,12 +80,13 @@ def cmd_plan(a):
             q = f"{t['quantity_t']:g} t, " if t["quantity_t"] else ""
             dep = f", after {t['depends_on']}" if t.get("depends_on") else ""
             print(f"  T{i} {t['department']:<17} {q}by {t['deadline']}{dep}: {t['title']}")
+        print(f"  Approve with: hay approve-plan --version {p['version']}")
 
 
 def cmd_approve_plan(a):
     conn = _conn()
     try:
-        ops.approve_plan(conn, _goal(conn), "ceo")
+        ops.approve_plan(conn, _goal(conn), "ceo", version=a.version)
     except ops.Denied as e:
         sys.exit(f"Cannot approve: {e}")
     _h("CEO approved the plan")
@@ -108,15 +109,20 @@ def cmd_procure(a):
         print(f"  {p['tonnes']:g} t from {v} at ${p['price_per_t']:g}/t = ${p['amount']:,.2f} {p['currency']}")
         print(f"  Arrives {p['receipt_date']}. Tier: {p['tier']}")
         if p["status"] == "pending_approval":
-            tier = next(t for t in rules.policy()["approval_tiers"] if t["name"] == p["tier"])
-            print(f"  Needs approval from: {tier['approver']}  ->  hay approve {p['id']} --as {tier['approver']}")
+            tier = rules.tier_for(p["amount"])
+            for who in tier["approvers"]:
+                print(f"  Needs approval from: {who}  ->  hay approve {p['id']} --as {who}")
 
 
 def cmd_approve(a):
     conn = _conn()
     try:
         p = ops.approve_proposal(conn, a.proposal, a.approver)
-        print(f"{a.proposal} approved by {a.approver}: {p['tonnes']:g} t, ${p['amount']:,.2f}")
+        if p["status"] == "approved":
+            print(f"{a.proposal} approved by {a.approver}: {p['tonnes']:g} t, ${p['amount']:,.2f}")
+        else:
+            left = rules.missing_signers(rules.tier_for(p["amount"]), json.loads(p["approved_by"]))
+            print(f"{a.proposal} signed by {a.approver}. Still needs: {', '.join(left)}")
     except ops.Denied as e:
         print(f"DENIED: {e}")
 
@@ -229,8 +235,9 @@ def cmd_demo(a):
     cmd_goal(ns)
     step("2. The CEO agent drafts a task plan through MCP.")
     cmd_plan(ns)
-    step("3. The CEO approves the plan. Each department gets a task and an owner.")
-    cmd_approve_plan(ns)
+    step("3. The CEO approves the plan version they reviewed. Each department gets a task and an owner.")
+    v = _conn().execute("SELECT MAX(version) v FROM plans WHERE status='proposed'").fetchone()["v"]
+    cmd_approve_plan(argparse.Namespace(version=v))
     step("4. The procurement agent does the legwork and proposes an order. A trick email is in the inbox.")
     cmd_procure(ns)
     conn = _conn()
@@ -261,7 +268,8 @@ def main(argv=None):
     sub.add_parser("reset").set_defaults(f=cmd_reset)
     g = sub.add_parser("goal"); g.add_argument("--tonnes", type=float); g.set_defaults(f=cmd_goal)
     p = sub.add_parser("plan"); p.add_argument("--replay", action="store_true"); p.set_defaults(f=cmd_plan)
-    sub.add_parser("approve-plan").set_defaults(f=cmd_approve_plan)
+    p = sub.add_parser("approve-plan"); p.add_argument("--version", type=int, required=True)
+    p.set_defaults(f=cmd_approve_plan)
     p = sub.add_parser("procure"); p.add_argument("--replay", action="store_true"); p.set_defaults(f=cmd_procure)
     p = sub.add_parser("approve"); p.add_argument("proposal"); p.add_argument("--as", dest="approver", required=True)
     p.set_defaults(f=cmd_approve)

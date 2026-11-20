@@ -34,5 +34,5 @@ def test_who_can_approve():
     mgr, top = rules.tier_for(20000), rules.tier_for(60000)
     assert rules.can_approve(mgr, "procurement_manager")
     assert not rules.can_approve(mgr, "production_manager")
-    assert not rules.can_approve(top, "procurement_manager")
     assert rules.can_approve(top, "ceo")
+    assert rules.missing_signers(top, ["ceo"]) == ["procurement_manager"]

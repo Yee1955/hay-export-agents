@@ -40,7 +40,7 @@ CREATE TABLE purchase_orders (  -- BC: purchaseOrders (header + one line, simpli
   status TEXT NOT NULL,          -- confirmed (firm inbound) | draft (created by this system)
   proposal_id TEXT UNIQUE, idempotency_key TEXT UNIQUE, created_at TEXT NOT NULL
 );
-CREATE UNIQUE INDEX one_draft_po_per_demand ON purchase_orders(demand_id) WHERE status = 'draft';
+CREATE UNIQUE INDEX one_system_po_per_demand ON purchase_orders(demand_id) WHERE proposal_id IS NOT NULL;
 CREATE TABLE vendor_messages (  -- inbox; UNTRUSTED text
   id TEXT PRIMARY KEY, vendor_id TEXT NOT NULL, received_at TEXT NOT NULL, body TEXT NOT NULL
 );

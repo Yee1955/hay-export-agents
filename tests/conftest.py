@@ -41,5 +41,5 @@ def planned(conn):
     """Goal confirmed, plan submitted by the CEO agent and approved by the CEO."""
     ops.confirm_goal(conn, "D-001")
     ceo(conn, "submit_task_plan", tasks=GOOD_PLAN)
-    ops.approve_plan(conn, "G-001", "ceo")
+    ops.approve_plan(conn, "G-001", "ceo", version=1)
     return conn

@@ -91,11 +91,12 @@ def tier_for(amount: float) -> dict:
 
 
 def can_approve(tier: dict, approver: str) -> bool:
-    if tier["approver"] is None:
-        return True
-    if tier["name"] == "ceo":
-        return approver == "ceo"
-    return approver in (tier["approver"], "ceo")
+    """Is this person one of the signers this tier needs?"""
+    return approver in tier["approvers"]
+
+
+def missing_signers(tier: dict, signed: list[str]) -> list[str]:
+    return [a for a in tier["approvers"] if a not in signed]
 
 
 def terms_hash(p: dict) -> str:

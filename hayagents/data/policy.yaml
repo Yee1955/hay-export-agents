@@ -1,5 +1,5 @@
 # Hard rules. Plain data, read by plain Python. No AI decides these.
-version: "2026-11-20.1"
+version: "2026-11-20.2"
 
 currency: AUD
 
@@ -8,15 +8,15 @@ approval_tiers:
   - name: auto
     min: 0
     max_exclusive: 10000
-    approver: null            # approved automatically, still logged
+    approvers: []             # approved automatically, still logged
   - name: department_manager
     min: 10000
     max_exclusive: 50000
-    approver: procurement_manager
+    approvers: [procurement_manager]
   - name: ceo
     min: 50000
     max_exclusive: null
-    approver: ceo              # department manager AND ceo
+    approvers: [procurement_manager, ceo]   # both must sign the same terms
 
 # Tools each agent may see and call. Anything not listed does not exist for that agent.
 agent_tools:

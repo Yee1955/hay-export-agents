@@ -5,15 +5,7 @@
   "prompt": "Plan goal G-001.",
   "calls": [
     {
-      "call_id": "exec-a742a9a3-8ec5-4dd5-8912-f4a132d697cb",
-      "tool": "get_shortfall",
-      "args": {
-        "goal_id": "G-001"
-      },
-      "status": "completed"
-    },
-    {
-      "call_id": "exec-7c6a61c4-2372-4528-a71c-c840696be51a",
+      "call_id": "exec-258887b5-e0ee-4104-97ef-b4d1bcc386e6",
       "tool": "get_goal",
       "args": {
         "goal_id": "G-001"
@@ -21,20 +13,28 @@
       "status": "completed"
     },
     {
-      "call_id": "exec-4c7728ad-b1b3-41cf-af48-758dd465c46e",
+      "call_id": "exec-f3eb4ddc-9394-4991-87cf-52877cfa53f4",
+      "tool": "get_shortfall",
+      "args": {
+        "goal_id": "G-001"
+      },
+      "status": "completed"
+    },
+    {
+      "call_id": "exec-7e998c8d-d609-40ff-b4f2-08e7d6b73ec6",
       "tool": "submit_task_plan",
       "args": {
         "tasks": [
           {
             "department": "procurement",
-            "title": "Buy 100 t of oaten hay for Bowmans",
+            "title": "Draft PO for 100 t of Vietnam-spec hay for Bowmans",
             "quantity_t": 100,
             "deadline": "2026-12-02",
             "criterion": "po_covers_shortfall"
           },
           {
             "department": "production",
-            "title": "Confirm Bowmans capacity and QC release",
+            "title": "Confirm Bowmans site capacity and QC release",
             "quantity_t": null,
             "deadline": "2026-12-04",
             "criterion": "site_capacity_confirmed",
@@ -49,9 +49,9 @@
           },
           {
             "department": "finance",
-            "title": "Check the purchase commitment against budget",
+            "title": "Check purchase commitment against budget",
             "quantity_t": null,
-            "deadline": "2026-12-02",
+            "deadline": "2026-12-03",
             "criterion": "commitment_checked"
           }
         ]
@@ -59,6 +59,6 @@
       "status": "completed"
     }
   ],
-  "final": "**G-001** is 100 tonnes short of oaten hay for Saigon Dairy Co.  \n**2 December** \u2014 Procurement to buy 100 tonnes. Finance to check the purchase commitment against budget.  \n**4 December** \u2014 After procurement, Production to confirm Bowmans capacity and QC release. Sales Fulfilment to confirm the carrier booking and ETA.  \nThe submitted plan awaits your approval.",
-  "tokens": 47272
+  "final": "- G-001 is 100 t short for Saigon Dairy Co.\u2019s 15 December arrival.\n- Procurement drafts the PO for exactly 100 t by 2 December. Finance checks the purchase commitment by 3 December.\n- By 4 December, Production confirms Bowmans capacity and QC release after Procurement completes its task. Sales Fulfilment confirms the carrier booking and ETA.\n- Plan version 1 is awaiting your approval.",
+  "tokens": 47244
 }

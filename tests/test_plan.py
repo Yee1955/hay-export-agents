@@ -49,8 +49,8 @@ def test_shortfall_needs_a_procurement_task(goal):
 def test_only_ceo_approves_plan(goal):
     ceo(goal, "submit_task_plan", tasks=GOOD_PLAN)
     with pytest.raises(ops.Denied):
-        ops.approve_plan(goal, "G-001", "procurement_manager")
-    ids = ops.approve_plan(goal, "G-001", "ceo")
+        ops.approve_plan(goal, "G-001", "procurement_manager", version=1)
+    ids = ops.approve_plan(goal, "G-001", "ceo", version=1)
     assert len(ids) == 4
     owners = {r["department"]: r["owner"] for r in goal.execute("SELECT * FROM tasks")}
     assert owners["procurement"] == "procurement_manager"
