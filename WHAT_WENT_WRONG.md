@@ -52,3 +52,19 @@ Real problems hit while building this, in order.
     agent started without a task skipped the scope checks. Both now refused.
 15. **An audit row could go missing.** A change could commit just before its audit row. The change and its
     audit row now commit in the same transaction.
+
+## Found while cutting the code down to a proof of concept (a second Codex review, ponytail method)
+
+16. **The same tool was written twice.** Every tool lived in one file and again as an MCP wrapper in another.
+    Now each tool is written once and registered from its own signature, with the internal context hidden.
+17. **A tool argument called `name` crashed the gate.** `get_skill(name=...)` clashed with the gate's own
+    `name` parameter. Fixed with a positional-only parameter.
+18. **The approval fingerprint broke on 100 vs 100.0.** Tonnes went in as an integer and came back from SQLite
+    as a float, so every signature looked like tampering. Numbers are normalised before hashing.
+19. **Refused calls were free.** A refused tool call rolled back its own budget charge, so an agent could retry
+    forever. The charge is now saved before the tool runs.
+20. **Two managers signing at once could lose a signature.** The read and the write were in separate steps.
+    Now one transaction.
+21. **Any failure looked like the demo's "lost reply".** The CLI couldn't tell a real error from the simulated
+    one, and the replay check in CI would still pass. The server now marks the simulated loss explicitly, and
+    the demo exits with an error unless the order is verified.

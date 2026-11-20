@@ -1,60 +1,48 @@
 {
   "agent": "ceo_agent",
-  "prompt": "Plan goal G-001.",
   "calls": [
     {
-      "call_id": "exec-49dfa838-dc70-4183-acac-058b0b198fa7",
       "tool": "get_goal",
       "args": {
         "goal_id": "G-001"
       }
     },
     {
-      "call_id": "exec-4d6c19ea-d246-4958-8977-71c088854b78",
-      "tool": "get_shortfall",
-      "args": {
-        "goal_id": "G-001"
-      }
-    },
-    {
-      "call_id": "exec-f4c824bd-1910-4343-9a7b-798b5f670130",
       "tool": "submit_task_plan",
       "args": {
-        "goal_id": "G-001",
         "tasks": [
           {
             "department": "procurement",
-            "title": "Draft PO for 50 t of Vietnam-spec hay for Bowmans before 5 December",
+            "title": "Draft PO for 50 t of oaten hay for Bowmans",
             "quantity_t": 50,
-            "deadline": "2026-11-27",
+            "deadline": "2026-12-05",
             "criterion": "po_covers_shortfall"
           },
           {
             "department": "production",
-            "title": "Confirm Bowmans capacity and QC release",
+            "title": "Confirm Bowmans capacity and QC release for the 450 t order",
             "quantity_t": null,
-            "deadline": "2026-12-04",
+            "deadline": "2026-12-05",
             "criterion": "site_capacity_confirmed",
             "depends_on": "G-001-T1"
           },
           {
             "department": "sales_fulfilment",
-            "title": "Confirm carrier booking and ETA for arrival by 15 December",
+            "title": "Confirm carrier booking and 15 December ETA for Saigon Dairy Co.",
             "quantity_t": null,
-            "deadline": "2026-12-01",
+            "deadline": "2026-11-27",
             "criterion": "booking_confirmed"
           },
           {
             "department": "finance",
-            "title": "Check the purchase commitment against budget",
+            "title": "Check the 50 t purchase commitment against budget",
             "quantity_t": null,
-            "deadline": "2026-11-30",
+            "deadline": "2026-11-27",
             "criterion": "commitment_checked"
           }
         ]
       }
     }
   ],
-  "final": "G-001 is 50 tonnes short for Saigon Dairy Co.  \nProcurement will draft the PO for 50 tonnes by 27 November. Finance will check the commitment by 30 November.  \nSales Fulfilment will confirm the carrier booking and ETA by 1 December.  \nProduction will confirm Bowmans capacity and QC release by 4 December, after Procurement completes its task.  \nThe plan is submitted and awaits your approval.",
-  "tokens": 47306
+  "final": "G-001 has a **50 t oaten hay shortfall** for Saigon Dairy Co.\u2019s 450 t order.  \nProcurement will draft a PO for 50 t for receipt at Bowmans by 5 December.  \nProduction will confirm site capacity and QC release by 5 December, after Procurement completes its task.  \nBy 27 November, Sales Fulfilment will confirm the carrier booking and 15 December ETA, and Finance will check the purchase against budget.  \nThe submitted plan is **awaiting CEO approval**."
 }

@@ -6,7 +6,6 @@ requires-python = ">=3.10"
 dependencies = [
   "openai-codex==0.171.0",
   "mcp==2.3.0",
-  "pyyaml>=6",
 ]
 
 [project.optional-dependencies]
@@ -19,7 +18,5 @@ hay = "hayagents.cli:main"
 packages = ["hayagents"]
 
 [tool.setuptools.package-data]
-hayagents = ["data/*.yaml", "prompts/*.md"]
+hayagents = ["prompts/*.md"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]

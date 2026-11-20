@@ -1,116 +1,88 @@
-"""What people do: the CEO sets and approves, managers sign, skill owners decide."""
-from __future__ import annotations
-
+"""What people do: the CEO confirms the goal and approves the plan, managers sign orders.
+Plus the plain-code check they rely on (is the task really done?) and the report back."""
 import json
 
-from . import rules
-from .db import log_event, now, transaction
-from .errors import Denied
-from .tools import read_skill
+from .db import log, one, task_and_demand, transaction
+from .rules import AGENTS, OWNERS, Denied, missing_signers, shortfall, terms_hash
 
 
-def confirm_goal(conn, demand_id: str, tonnes: float | None = None, confirmed_by: str = "ceo") -> str:
+def confirm_goal(conn, demand_id: str, tonnes: float | None = None) -> str:
     """The CEO confirms the goal once. Changing the tonnes here changes every number downstream."""
     with transaction(conn):
-        if conn.execute("SELECT 1 FROM goals WHERE demand_id=? AND status='open'", (demand_id,)).fetchone():
-            raise Denied(f"demand {demand_id} already has an open goal")
+        if one(conn, "SELECT 1 FROM goals WHERE demand_id=?", demand_id):
+            raise Denied(f"demand {demand_id} already has a goal")
         if tonnes is not None:
             conn.execute("UPDATE demands SET tonnes=? WHERE id=?", (tonnes, demand_id))
-        goal_id = f"G-{conn.execute('SELECT COUNT(*) c FROM goals').fetchone()['c'] + 1:03d}"
-        conn.execute("INSERT INTO goals VALUES (?,?,?,?,?)", (goal_id, demand_id, confirmed_by, now(), "open"))
-        conn.execute("INSERT INTO budgets (goal_id) VALUES (?)", (goal_id,))
-        log_event(conn, actor=confirmed_by, action="confirm_goal", decision="ok", goal_id=goal_id,
-                  detail={"demand": demand_id, "tonnes": tonnes}, policy_version=rules.policy()["version"])
+        goal_id = f"G-{one(conn, 'SELECT COUNT(*) + 1 FROM goals')[0]:03d}"
+        conn.execute("INSERT INTO goals (id, demand_id) VALUES (?,?)", (goal_id, demand_id))
+        log(conn, "ceo", "confirm_goal", "ok", detail={"demand": demand_id, "tonnes": tonnes}, goal_id=goal_id)
     return goal_id
 
 
-def approve_plan(conn, goal_id: str, approver: str, version: int | None) -> list[str]:
-    """The CEO approves the exact plan version they reviewed. Each task gets its owner."""
-    if approver != "ceo":
-        raise Denied("only the CEO approves the task plan")
+def approve_plan(conn, goal_id: str) -> None:
+    """The CEO approves the one waiting draft (drafts can't be replaced). Each task gets its owner."""
     with transaction(conn):
-        plan = conn.execute("SELECT * FROM plans WHERE goal_id=? AND status='proposed'", (goal_id,)).fetchone()
+        plan = one(conn, "SELECT * FROM plans WHERE goal_id=? AND status='proposed'", goal_id)
         if plan is None:
-            raise Denied("no proposed plan to approve")
-        if plan["version"] != version:
-            raise Denied(f"you reviewed plan v{version}, but the plan waiting is v{plan['version']}: review it again")
-        ids = []
-        for i, t in enumerate(json.loads(plan["tasks_json"]), 1):
-            dept, tid = t["department"], f"{goal_id}-T{i}"
-            conn.execute("INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                         (tid, goal_id, dept, rules.DEPARTMENT_OWNER[dept], rules.DEPARTMENT_AGENT.get(dept),
-                          t["title"], t["quantity_t"], t["deadline"], t["criterion"], t.get("depends_on"),
-                          "open" if dept == "procurement" else "waiting_on_human"))
-            ids.append(tid)
-        conn.execute("UPDATE plans SET status='approved', approved_by=? WHERE goal_id=? AND version=?",
-                     (approver, goal_id, version))
-        log_event(conn, actor=approver, action="approve_plan", decision="ok", goal_id=goal_id,
-                  detail={"version": version, "tasks": ids})
-    return ids
+            raise Denied("no plan is waiting for approval")
+        for i, t in enumerate(json.loads(plan["tasks"]), 1):
+            dept = t["department"]
+            conn.execute("INSERT INTO tasks VALUES (?,?,?,?,?,?,?,?,?,?,'open')",
+                         (f"{goal_id}-T{i}", goal_id, dept, OWNERS[dept], AGENTS.get(dept), t["title"],
+                          t["quantity_t"], t["deadline"], t["criterion"], t["depends_on"]))
+        conn.execute("UPDATE plans SET status='approved' WHERE goal_id=?", (goal_id,))
+        log(conn, "ceo", "approve_plan", "ok", goal_id=goal_id)
 
 
-def approve_proposal(conn, proposal_id: str, approver: str) -> dict:
-    """One signature on a proposal. Big orders need every signer in the tier, on the same terms."""
-    p = conn.execute("SELECT p.*, t.goal_id FROM proposals p JOIN tasks t ON t.id = p.task_id WHERE p.id=?",
-                     (proposal_id,)).fetchone()
-    if p is None:
-        raise Denied("unknown proposal")
+def sign(conn, proposal_id: str, signer: str) -> list[str]:
+    """One signature on a proposal. Returns the signers still needed (none = approved)."""
     try:
-        with transaction(conn):
-            signed, missing = _sign(conn, proposal_id, approver)
-            log_event(conn, actor=approver, action="approve_proposal", decision="ok", goal_id=p["goal_id"],
-                      task_id=p["task_id"], detail={"proposal": proposal_id, "signed": signed, "still_needs": missing})
-    except Denied as e:     # the transaction rolled back; the refusal is still logged
-        log_event(conn, actor=approver, action="approve_proposal", decision="denied", reason=str(e),
-                  goal_id=p["goal_id"], task_id=p["task_id"], detail={"proposal": proposal_id})
+        with transaction(conn):                     # read, check and sign in one go: no lost signatures
+            p = one(conn, "SELECT * FROM proposals WHERE id=?", proposal_id)
+            signed = json.loads(p["signed_by"]) if p else []
+            needed = missing_signers(p["amount"], signed) if p else []
+            if p is None or p["status"] != "pending":
+                raise Denied(f"{proposal_id} is not waiting for signatures")
+            if p["terms_hash"] != terms_hash(p):
+                raise Denied("terms were edited: propose again")
+            if signer not in needed:
+                raise Denied(f"{signer} can't sign this order (needs {', '.join(needed)})")
+            left = missing_signers(p["amount"], signed + [signer])
+            conn.execute("UPDATE proposals SET signed_by=?, status=? WHERE id=?",
+                         (json.dumps(signed + [signer]), "pending" if left else "approved", proposal_id))
+            log(conn, signer, "sign", "ok", detail={"proposal": proposal_id, "still_needs": left}, task_id=p["task_id"])
+    except Denied as e:
+        log(conn, signer, "sign", "denied", str(e), {"proposal": proposal_id})
         raise
-    return dict(conn.execute("SELECT * FROM proposals WHERE id=?", (proposal_id,)).fetchone())
+    return left
 
 
-def _sign(conn, proposal_id, approver):
-    p = conn.execute("SELECT * FROM proposals WHERE id=?", (proposal_id,)).fetchone()
-    tier = rules.tier_for(p["amount"])                    # recomputed, never trusted from storage
-    signed = json.loads(p["approved_by"] or "[]")
-    if p["status"] != "pending_approval":
-        raise Denied(f"proposal is {p['status']}, not waiting for approval")
-    if p["terms_hash"] != rules.terms_hash(dict(p)):
-        raise Denied("proposal terms were edited: it needs to be proposed again")
-    if tier["name"] != p["tier"]:
-        raise Denied(f"spending limits changed: this is now a {tier['name']} order")
-    if not rules.can_approve(tier, approver):
-        raise Denied(f"{approver} cannot approve a {tier['name']} order (needs {', '.join(tier['approvers'])})")
-    if approver in signed:
-        raise Denied(f"{approver} has already signed")
-    signed.append(approver)
-    missing = rules.missing_signers(tier, signed)
-    conn.execute("UPDATE proposals SET status=?, approved_by=?, approved_terms_hash=?, approved_at=? WHERE id=?",
-                 ("pending_approval" if missing else "approved", json.dumps(signed), p["terms_hash"], now(),
-                  proposal_id))
-    return signed, missing
-
-
-def decide_skill_suggestion(conn, suggestion_id: int, approver: str, accept: bool) -> None:
-    """Only the skill's owner can accept an agent's suggested edit."""
-    s = conn.execute("SELECT * FROM skill_suggestions WHERE id=?", (suggestion_id,)).fetchone()
-    owner = read_skill(s["skill"])["owner"]
-    if approver != owner:
-        raise Denied(f"only the skill owner ({owner}) can decide")
-    conn.execute("UPDATE skill_suggestions SET status=?, decided_by=? WHERE id=?",
-                 ("accepted" if accept else "rejected", approver, suggestion_id))
-    log_event(conn, actor=approver, action="decide_skill_suggestion", decision="ok",
-              detail={"id": suggestion_id, "accepted": accept})
-
-
-def report(conn, goal_id: str) -> dict:
-    """What the CEO agent reports back: done, waiting, needs a decision."""
-    tasks = [dict(r) for r in conn.execute("SELECT * FROM tasks WHERE goal_id=? ORDER BY id", (goal_id,))]
-    return {
-        "done": [t for t in tasks if t["status"] == "verified"],
-        "waiting": [t for t in tasks if t["status"] != "verified"],
-        "needs_decision": [dict(r) for r in conn.execute(
-            "SELECT p.* FROM proposals p JOIN tasks t ON t.id = p.task_id "
-            "WHERE t.goal_id=? AND p.status='pending_approval'", (goal_id,))],
-        "blocked": conn.execute("SELECT COUNT(*) c FROM events WHERE goal_id=? AND decision='denied'",
-                                (goal_id,)).fetchone()["c"],
-        "budget": dict(conn.execute("SELECT * FROM budgets WHERE goal_id=?", (goal_id,)).fetchone()),
+def verify_task(conn, task_id: str) -> tuple[bool, str]:
+    """Close the task only when the business data proves it. The AI never marks a task done."""
+    t, d = task_and_demand(conn, task_id)
+    p = one(conn, "SELECT * FROM proposals WHERE task_id=? AND status='executed'", task_id)
+    po = p and one(conn, "SELECT * FROM purchase_orders WHERE proposal_id=?", p["id"])
+    if not po:
+        return False, "no purchase order from a signed proposal for this task yet"
+    checks = {
+        "covers the shortfall": po["tonnes"] >= shortfall(conn, d["id"])["shortfall_t"],
+        "matches the signed terms": p["terms_hash"] == terms_hash(p)
+            and all(po[k] == p[k] for k in ("vendor_id", "tonnes", "amount", "receipt_date")),
+        "arrives before the site cutoff": po["receipt_date"] <= d["receipt_cutoff"],
     }
+    ok = all(checks.values())
+    with transaction(conn):
+        if ok:
+            conn.execute("UPDATE tasks SET status='verified' WHERE id=?", (task_id,))
+        log(conn, "verifier", "verify_task", "ok" if ok else "failed", detail=checks, task_id=task_id)
+    return ok, ", ".join(f"{k}: {'yes' if v else 'NO'}" for k, v in checks.items())
+
+
+def report(conn, goal_id: str) -> str:
+    """What the CEO agent reports back: done, waiting on whom, refusals and budget."""
+    tasks = conn.execute("SELECT * FROM tasks WHERE goal_id=? ORDER BY id", (goal_id,)).fetchall()
+    goal = one(conn, "SELECT * FROM goals WHERE id=?", goal_id)
+    refused = one(conn, "SELECT COUNT(*) FROM events WHERE decision='denied'")[0]
+    return (f"Done: {', '.join(t['title'] for t in tasks if t['status'] == 'verified') or 'nothing yet'}."
+            f" Waiting on: {', '.join(t['owner'] for t in tasks if t['status'] != 'verified')}."
+            f" Refusals in the audit log: {refused}. Used {goal['tokens_used']:,} tokens, {goal['tool_calls']} tool calls.")
