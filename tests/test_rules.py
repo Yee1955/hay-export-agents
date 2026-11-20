@@ -1,6 +1,6 @@
 import pytest
 
-from hayagents import ops, rules
+from hayagents import people, rules
 
 
 def test_shortfall_seed(conn):
@@ -10,7 +10,7 @@ def test_shortfall_seed(conn):
 
 
 def test_shortfall_follows_goal_change(conn):
-    ops.confirm_goal(conn, "D-001", tonnes=450)
+    people.confirm_goal(conn, "D-001", tonnes=450)
     assert rules.shortfall(conn, "D-001").gap_t == 50
 
 

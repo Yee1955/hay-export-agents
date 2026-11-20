@@ -59,7 +59,7 @@ CREATE TABLE tasks (
   criterion TEXT NOT NULL, depends_on TEXT, status TEXT NOT NULL
 );
 CREATE TABLE proposals (
-  id TEXT PRIMARY KEY, task_id TEXT NOT NULL, version INTEGER NOT NULL,
+  id TEXT PRIMARY KEY, task_id TEXT NOT NULL,
   vendor_id TEXT NOT NULL, quote_id TEXT NOT NULL, tonnes REAL NOT NULL,
   price_per_t REAL NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL,
   receipt_date TEXT NOT NULL, spec_version TEXT NOT NULL, rationale TEXT,
@@ -163,6 +163,16 @@ def reset(path: Path | str | None = None) -> Path:
         conn.executemany(f"INSERT INTO {table} VALUES ({marks})", rows)
     conn.close()
     return p
+
+
+def goal_and_demand(conn, goal_id):
+    goal = conn.execute("SELECT * FROM goals WHERE id=?", (goal_id,)).fetchone()
+    return goal, conn.execute("SELECT * FROM demands WHERE id=?", (goal["demand_id"],)).fetchone()
+
+
+def task_and_demand(conn, task_id):
+    task = conn.execute("SELECT * FROM tasks WHERE id=?", (task_id,)).fetchone()
+    return task, goal_and_demand(conn, task["goal_id"])[1]
 
 
 def log_event(conn, *, actor, action, decision, reason=None, detail=None,

@@ -31,30 +31,22 @@ The CEO confirms one goal: *ship 500 t of Vietnam-spec oaten hay to Saigon Dairy
 
 ## How it fits together
 
-```mermaid
-flowchart TD
-  CEO[CEO: sets and approves] --> CA[CEO agent: splits goal into tasks]
-  CA --> P[Procurement: manager + agent]
-  CA --> PR[Production: manager + agent]
-  CA --> S[Sales: manager]
-  CA --> F[Finance: manager]
-  P --> G
-  PR --> G
-  G[Safety gate: plain Python, no AI<br/>allow-lists, tiers, budgets, scope] --> L[(Audit log)]
-  G --> M[MCP server: hay-erp]
-  M --> BC[(Mock Business Central<br/>SQLite)]
-  M --> SK[Skill library]
-```
+![Architecture](docs/architecture.png)
 
-| Piece | File | What it does |
+| File | Who it's for | What it does |
 |---|---|---|
-| Safety gate | `hayagents/ops.py` (`gate`) | Every tool call: allow-list, task scope, token and tool-call budget, then audit row |
-| Hard rules | `hayagents/rules.py`, `data/policy.yaml`, `data/specs.yaml` | Shortfall, tiers, who can approve, market specs, plan validation |
-| MCP server | `hayagents/erp_server.py` | One process per agent run; only that agent's tools are registered |
-| Agents | `hayagents/agents.py` | Codex SDK turn, locked down, MCP as the only tool source; record and replay |
-| People | `hayagents/cli.py` | CEO and managers confirm, approve, execute, verify, report, audit |
-| Mock ERP | `hayagents/db.py` | Vendors, items (lots), quotes, purchase orders, demands; field names after BC API v2.0 |
-| Skill | `skills/pick-a-grower/SKILL.md` | Team know-how with a version and an owner |
+| `hayagents/gate.py` | everyone | The safety gate: allow-list, task scope, budgets, audit row on every call |
+| `hayagents/tools.py` | agents | Read data, draft a plan, propose an order, send a note. No writes to business data |
+| `hayagents/people.py` | people | Confirm the goal, approve the plan, sign orders, decide skill edits, the CEO report |
+| `hayagents/orders.py` | the system | Place an approved order (rechecked, safe to retry) and verify the task |
+| `hayagents/rules.py` + `data/*.yaml` | everyone | Hard rules: shortfall, spending tiers, signers, market specs, plan checks |
+| `hayagents/erp_server.py` | agents | MCP server: one process per agent turn, only that agent's tools |
+| `hayagents/agents.py` + `prompts/` | agents | Runs a turn on the Codex SDK (locked down); record and replay |
+| `hayagents/db.py` | everyone | Mock Business Central in SQLite (field names after BC API v2.0) |
+| `hayagents/cli.py` | people | `hay` commands and the step-by-step demo |
+| `skills/pick-a-grower/SKILL.md` | agents | Team know-how with a version and an owner |
+
+The diagram source is `docs/architecture.svg`.
 
 ## Design choices
 

@@ -1,12 +1,13 @@
 import pytest
 
-from hayagents import db, ops
+from hayagents import db, orders, people
+from hayagents.gate import gate
 
 
 @pytest.fixture
 def conn(tmp_path, monkeypatch):
     path = db.reset(tmp_path / "test.db")
-    monkeypatch.setattr(ops, "FAULT_FLAG", tmp_path / ".fault")
+    monkeypatch.setattr(orders, "FAULT_FLAG", tmp_path / ".fault")
     c = db.connect(path)
     yield c
     c.close()
@@ -25,21 +26,21 @@ GOOD_PLAN = [
 
 
 def ceo(conn, tool, **args):
-    return ops.gate(conn, agent="ceo_agent", goal_id="G-001", task_id=None, tool=tool, args=args)
+    return gate(conn, agent="ceo_agent", goal_id="G-001", task_id=None, tool=tool, args=args)
 
 
 def proc(conn, tool, task="G-001-T1", **args):
-    return ops.gate(conn, agent="procurement_agent", goal_id=None, task_id=task, tool=tool, args=args)
+    return gate(conn, agent="procurement_agent", goal_id=None, task_id=task, tool=tool, args=args)
 
 
 def operator(conn, tool, **args):
-    return ops.gate(conn, agent="operator", goal_id=None, task_id=None, tool=tool, args=args)
+    return gate(conn, agent="operator", goal_id=None, task_id=None, tool=tool, args=args)
 
 
 @pytest.fixture
 def planned(conn):
     """Goal confirmed, plan submitted by the CEO agent and approved by the CEO."""
-    ops.confirm_goal(conn, "D-001")
+    people.confirm_goal(conn, "D-001")
     ceo(conn, "submit_task_plan", tasks=GOOD_PLAN)
-    ops.approve_plan(conn, "G-001", "ceo", version=1)
+    people.approve_plan(conn, "G-001", "ceo", version=1)
     return conn

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import dataclass
 from datetime import date
 from functools import lru_cache
@@ -11,6 +12,7 @@ from pathlib import Path
 import yaml
 
 DATA = Path(__file__).parent / "data"
+TODAY = os.environ.get("HAY_TODAY", "2026-11-20")   # fixed demo date, so every run gives the same result
 
 DEPARTMENTS = {"procurement", "production", "sales_fulfilment", "finance"}
 DEPARTMENT_OWNER = {

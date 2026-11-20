@@ -19,7 +19,7 @@ hay = "hayagents.cli:main"
 packages = ["hayagents"]
 
 [tool.setuptools.package-data]
-hayagents = ["data/*.yaml"]
+hayagents = ["data/*.yaml", "prompts/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

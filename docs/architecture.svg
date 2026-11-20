@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1060" viewBox="0 0 1700 1060" font-family="Inter, 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif">
+<defs>
+  <marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9z" fill="#6b6a64"/></marker>
+  <style>
+    .t{font-size:21px;font-weight:600}
+    .s{font-size:15.5px;fill:#5f5e5a}
+    .lab{font-size:13px;font-weight:700;letter-spacing:2.5px;fill:#9a988f}
+    .ln{stroke:#6b6a64;stroke-width:1.6;fill:none}
+    .pill{font-size:14.5px;font-weight:600}
+  </style>
+</defs>
+<rect width="1700" height="1060" fill="#ffffff"/>
+<text x="80" y="62" font-size="31" font-weight="700" fill="#2c2c2a">hay-export-agents</text>
+<text x="80" y="96" font-size="18" fill="#5f5e5a">People decide. Agents do the legwork. Plain code holds the rules.</text>
+
+<!-- band labels -->
+<text class="lab" x="80" y="196">PEOPLE</text>
+<text class="lab" x="80" y="366">AGENTS</text>
+<text x="80" y="392" font-size="13" fill="#7F77DD">Codex SDK,</text>
+<text x="80" y="410" font-size="13" fill="#7F77DD">locked down:</text>
+<text x="80" y="428" font-size="13" fill="#7F77DD">MCP only</text>
+<text class="lab" x="80" y="556">RULES</text>
+<text class="lab" x="80" y="696">CONNECT</text>
+<text class="lab" x="80" y="846">DATA</text>
+
+<!-- PEOPLE -->
+<rect x="200" y="135" width="360" height="110" rx="14" fill="#F1EFE8" stroke="#B4B2A9"/>
+<text class="t" x="224" y="177" fill="#2c2c2a">CEO</text>
+<text class="s" x="224" y="205">Sets the goal, approves the plan</text>
+<text class="s" x="224" y="227">Second signature on orders over $50k</text>
+
+<rect x="620" y="135" width="1000" height="110" rx="14" fill="#F1EFE8" stroke="#B4B2A9"/>
+<text class="t" x="644" y="177" fill="#2c2c2a">Department managers</text>
+<text class="s" x="644" y="205">Own each task and sign orders by spending tier</text>
+<g class="pill" fill="#444441">
+  <rect x="1060" y="160" width="130" height="34" rx="17" fill="#fff" stroke="#B4B2A9"/><text x="1125" y="182" text-anchor="middle">Procurement</text>
+  <rect x="1202" y="160" width="124" height="34" rx="17" fill="#fff" stroke="#B4B2A9"/><text x="1264" y="182" text-anchor="middle">Production</text>
+  <rect x="1338" y="160" width="90" height="34" rx="17" fill="#fff" stroke="#B4B2A9"/><text x="1383" y="182" text-anchor="middle">Sales</text>
+  <rect x="1440" y="160" width="100" height="34" rx="17" fill="#fff" stroke="#B4B2A9"/><text x="1490" y="182" text-anchor="middle">Finance</text>
+</g>
+
+<!-- people -> agents -->
+<line class="ln" x1="380" y1="247" x2="380" y2="308" marker-end="url(#a)"/>
+<text class="s" x="392" y="284">goal</text>
+<line class="ln" x1="855" y1="247" x2="855" y2="308" marker-end="url(#a)"/>
+<text class="s" x="867" y="284">assigns, decides</text>
+<line class="ln" x1="1375" y1="247" x2="1375" y2="308" marker-end="url(#a)"/>
+
+<!-- AGENTS -->
+<rect x="200" y="310" width="360" height="120" rx="14" fill="#EEEDFE" stroke="#7F77DD"/>
+<text class="t" x="224" y="352" fill="#3C3489">CEO agent</text>
+<text class="s" x="224" y="380" fill="#534AB7">Splits the goal into tasks with</text>
+<text class="s" x="224" y="402" fill="#534AB7">checks and deadlines; reports back</text>
+
+<line class="ln" x1="562" y1="370" x2="618" y2="370" marker-end="url(#a)"/>
+<text class="s" x="570" y="360">tasks</text>
+
+<rect x="620" y="310" width="470" height="120" rx="14" fill="#EEEDFE" stroke="#7F77DD"/>
+<text class="t" x="644" y="352" fill="#3C3489">Procurement agent</text>
+<text class="s" x="644" y="380" fill="#534AB7">Reads stock and quotes, follows the skill,</text>
+<text class="s" x="644" y="402" fill="#534AB7">proposes one order. Never places it.</text>
+
+<rect x="1130" y="310" width="490" height="120" rx="14" fill="#EEEDFE" stroke="#7F77DD"/>
+<text class="t" x="1154" y="352" fill="#3C3489">Production agent</text>
+<text class="s" x="1154" y="380" fill="#534AB7">Gets delivery notes from linked tasks.</text>
+<text class="s" x="1154" y="402" fill="#534AB7">Sales and finance tasks stay with people.</text>
+
+
+<!-- agents -> gate -->
+<line class="ln" x1="380" y1="432" x2="380" y2="488" marker-end="url(#a)"/>
+<line class="ln" x1="855" y1="432" x2="855" y2="488" marker-end="url(#a)"/>
+<line class="ln" x1="1180" y1="432" x2="1180" y2="488" marker-end="url(#a)"/>
+
+<!-- RULES: gate -->
+<rect x="200" y="490" width="1050" height="120" rx="14" fill="#FAECE7" stroke="#D85A30"/>
+<text class="t" x="224" y="530" fill="#712B13">Safety gate</text>
+<text class="s" x="350" y="530" fill="#993C1D">plain Python, no AI, every call</text>
+<g class="pill" fill="#712B13">
+  <rect x="222" y="552" width="188" height="38" rx="19" fill="#fff" stroke="#F0997B"/><text x="316" y="576" text-anchor="middle">Allowed tools only</text>
+  <rect x="424" y="552" width="188" height="38" rx="19" fill="#fff" stroke="#F0997B"/><text x="518" y="576" text-anchor="middle">Own task only</text>
+  <rect x="626" y="552" width="188" height="38" rx="19" fill="#fff" stroke="#F0997B"/><text x="720" y="576" text-anchor="middle">Token + call budget</text>
+  <rect x="828" y="552" width="198" height="38" rx="19" fill="#fff" stroke="#F0997B"/><text x="927" y="576" text-anchor="middle">Tiers and signatures</text>
+  <rect x="1040" y="552" width="190" height="38" rx="19" fill="#fff" stroke="#F0997B"/><text x="1135" y="576" text-anchor="middle">Recheck at execution</text>
+</g>
+
+<line class="ln" x1="1252" y1="550" x2="1288" y2="550" marker-end="url(#a)"/>
+<rect x="1290" y="490" width="330" height="120" rx="14" fill="#FAECE7" stroke="#D85A30"/>
+<text class="t" x="1314" y="532" fill="#712B13">Audit log</text>
+<text class="s" x="1314" y="560" fill="#993C1D">Every read, write, message</text>
+<text class="s" x="1314" y="582" fill="#993C1D">and refusal, with the reason</text>
+
+<!-- gate -> MCP -->
+<line class="ln" x1="725" y1="612" x2="725" y2="648" marker-end="url(#a)"/>
+
+<!-- CONNECT -->
+<rect x="200" y="650" width="1050" height="96" rx="14" fill="#E1F5EE" stroke="#1D9E75"/>
+<text class="t" x="224" y="690" fill="#085041">hay-erp MCP server</text>
+<text class="s" x="224" y="718" fill="#0F6E56">One process per agent turn. Only that agent's tools exist.</text>
+
+<rect x="1290" y="650" width="330" height="96" rx="14" fill="#F1EFE8" stroke="#B4B2A9"/>
+<text class="t" x="1314" y="690" fill="#2c2c2a">System places the order</text>
+<text class="s" x="1314" y="718">After sign-off. Safe to retry.</text>
+<line class="ln" x1="1288" y1="698" x2="1252" y2="698" marker-end="url(#a)"/>
+
+<!-- MCP -> data -->
+<line class="ln" x1="410" y1="748" x2="410" y2="788" marker-end="url(#a)"/>
+<line class="ln" x1="795" y1="748" x2="795" y2="788" marker-end="url(#a)"/>
+<line class="ln" x1="1110" y1="748" x2="1110" y2="788" marker-end="url(#a)"/>
+
+<!-- DATA -->
+<rect x="200" y="790" width="420" height="110" rx="14" fill="#F1EFE8" stroke="#B4B2A9"/>
+<text class="t" x="224" y="832" fill="#2c2c2a">Mock Business Central</text>
+<text class="s" x="224" y="860">Lots, quotes, demands, purchase orders</text>
+<text class="s" x="224" y="882">SQLite, synthetic data</text>
+
+<rect x="650" y="790" width="290" height="110" rx="14" fill="#E1F5EE" stroke="#1D9E75"/>
+<text class="t" x="674" y="832" fill="#085041">Skill library</text>
+<text class="s" x="674" y="860" fill="#0F6E56">Team know-how, versioned</text>
+<text class="s" x="674" y="882" fill="#0F6E56">Owner signs every edit</text>
+
+<rect x="970" y="790" width="280" height="110" rx="14" fill="#F1EFE8" stroke="#B4B2A9"/>
+<text class="t" x="994" y="832" fill="#2c2c2a">Vendor inbox</text>
+<text class="s" x="994" y="860">Untrusted text</text>
+<text class="s" x="994" y="882">Read as data, never as orders</text>
+
+<!-- flow strip -->
+<line x1="80" y1="945" x2="1620" y2="945" stroke="#e4e2da"/>
+<text class="lab" x="80" y="990">ONE ORDER</text>
+<g font-size="15" fill="#2c2c2a">
+  <circle cx="220" cy="985" r="15" fill="#2c2c2a"/><text x="220" y="990" text-anchor="middle" fill="#fff" font-weight="700">1</text><text x="244" y="990">CEO sets goal</text>
+  <circle cx="420" cy="985" r="15" fill="#534AB7"/><text x="420" y="990" text-anchor="middle" fill="#fff" font-weight="700">2</text><text x="444" y="990">Agent plans</text>
+  <circle cx="600" cy="985" r="15" fill="#2c2c2a"/><text x="600" y="990" text-anchor="middle" fill="#fff" font-weight="700">3</text><text x="624" y="990">CEO approves</text>
+  <circle cx="800" cy="985" r="15" fill="#534AB7"/><text x="800" y="990" text-anchor="middle" fill="#fff" font-weight="700">4</text><text x="824" y="990">Agent proposes</text>
+  <circle cx="1010" cy="985" r="15" fill="#2c2c2a"/><text x="1010" y="990" text-anchor="middle" fill="#fff" font-weight="700">5</text><text x="1034" y="990">Manager signs</text>
+  <circle cx="1215" cy="985" r="15" fill="#D85A30"/><text x="1215" y="990" text-anchor="middle" fill="#fff" font-weight="700">6</text><text x="1239" y="990">System places it</text>
+  <circle cx="1440" cy="985" r="15" fill="#D85A30"/><text x="1440" y="990" text-anchor="middle" fill="#fff" font-weight="700">7</text><text x="1464" y="990">Code verifies</text>
+</g>
+<g font-size="13.5" fill="#6b6a64">
+  <rect x="200" y="1018" width="14" height="14" rx="3" fill="#F1EFE8" stroke="#B4B2A9"/><text x="222" y="1030">People and systems</text>
+  <rect x="380" y="1018" width="14" height="14" rx="3" fill="#EEEDFE" stroke="#7F77DD"/><text x="402" y="1030">AI agents</text>
+  <rect x="500" y="1018" width="14" height="14" rx="3" fill="#FAECE7" stroke="#D85A30"/><text x="522" y="1030">Rules and record</text>
+  <rect x="660" y="1018" width="14" height="14" rx="3" fill="#E1F5EE" stroke="#1D9E75"/><text x="682" y="1030">Connection and know-how</text>
+</g>
+</svg>
