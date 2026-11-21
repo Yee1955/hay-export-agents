@@ -1,5 +1,6 @@
 ---
 name: pick-a-grower
+description: How to choose one grower's quote to cover a hay shortfall.
 version: 1.1.0
 owner: procurement_manager
 ---

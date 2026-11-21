@@ -6,5 +6,5 @@ hay.db
 hay.db-*
 .env
 .pytest_cache/
-hay-server.log
-.fault_after_commit
+*.log
+.vscode/

@@ -1,11 +1,14 @@
 [project]
 name = "hay-export-agents"
 version = "0.1.0"
-description = "Demo: governed multi-agent system for a hay exporter (MCP + Codex SDK)"
-requires-python = ">=3.10"
+description = "Demo: a governed agent team for a hay exporter (Microsoft Agent Framework + MCP + Codex)"
+requires-python = ">=3.11"
 dependencies = [
+  "agent-framework-core==1.26.0",
+  "agent-framework-orchestrations==1.4.2",
   "openai-codex==0.171.0",
   "mcp==2.3.0",
+  "tenacity>=9.1.4,<10",              # needed by Agent Framework for MCP
 ]
 
 [project.optional-dependencies]
@@ -13,7 +16,3 @@ dev = ["pytest>=8"]
 
 [tool.setuptools]
 packages = ["hayagents"]
-
-[tool.setuptools.package-data]
-hayagents = ["prompts/*.md"]
-

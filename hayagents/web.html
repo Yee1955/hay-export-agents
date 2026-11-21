@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hay Export Agents</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --paddock:#E9ECE3; --paper:#FBFCF8; --gum:#1E2B24; --muted:#5C6B61; --line:#D5DBCF;
+          --hay:#E0A82E; --hay-pale:#F7E7BC; --dam:#2F6B8A; --dam-pale:#DCEAF1; --sage:#6E8B5E; --sage-pale:#E2EADB;
+          --berry:#A3263A; --berry-pale:#F6DDE1; --display:"Bricolage Grotesque", system-ui, sans-serif;
+          --body:Figtree, system-ui, sans-serif; --mono:"JetBrains Mono", ui-monospace, monospace; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.55 var(--body); color:var(--gum); background:var(--paddock); }
+  :focus-visible { outline:2px solid var(--dam); outline-offset:2px; }
+  h1, h2 { font-family:var(--display); font-weight:700; letter-spacing:-.01em; margin:0; }
+  .muted { color:var(--muted); }
+
+  /* top: the brand and the team */
+  .top { display:flex; align-items:center; gap:28px; padding:18px 32px; border-bottom:1px solid var(--line); background:var(--paper); }
+  .brand { display:flex; align-items:center; gap:10px; font:700 20px var(--display); white-space:nowrap; }
+  .brand svg { width:30px; }
+  .team { display:flex; gap:22px; margin-left:auto; flex-wrap:wrap; }
+  .member { display:flex; align-items:center; gap:10px; }
+  .member b { display:block; font-weight:600; font-size:14px; line-height:1.2; }
+  .member small { color:var(--muted); font-size:12px; }
+  .member.active small { color:var(--gum); font-weight:600; }
+
+  /* the agents' figures */
+  .fig { width:44px; height:44px; border-radius:50%; display:grid; place-items:center; flex:none; position:relative; }
+  .fig svg { width:70%; }
+  .fig.sm { width:28px; height:28px; } .fig.lg { width:72px; height:72px; }
+  .ceo_agent { background:var(--gum); } .production_agent { background:var(--hay); }
+  .procurement_agent { background:var(--dam); } .coordinator { background:var(--sage); }
+  .active .fig::after { content:""; position:absolute; inset:-5px; border-radius:50%; border:2px solid var(--hay);
+                        animation:ring 1.4s ease-out infinite; }
+  @keyframes ring { from { transform:scale(.85); opacity:1; } to { transform:scale(1.2); opacity:0; } }
+
+  /* page */
+  .layout { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:32px; padding:28px 32px 150px; max-width:1360px; margin:0 auto; }
+  .panel { background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:24px; }
+  .history { opacity:.5; filter:blur(1.5px); transition:opacity .3s, filter .3s; }
+  .history:hover, .history:focus-within { opacity:1; filter:none; }
+  .history h2 { font-size:15px; margin-bottom:12px; }
+  .history p { margin:0 0 10px; padding-left:12px; border-left:2px solid var(--line); font-size:13px; }
+
+  /* the company data, live */
+  .side { display:flex; flex-direction:column; gap:22px; }
+  .data h2 { font-size:15px; margin-bottom:10px; }
+  .lot { display:grid; grid-template-columns:auto 1fr auto; gap:4px 10px; align-items:center; padding:10px 0;
+         border-top:1px solid var(--line); font-size:13px; }
+  .lot:first-of-type { border-top:none; }
+  .lot svg { width:28px; grid-row:span 2; }
+  .lot b { font-size:14px; }
+  .lot .tonnes { font:600 14px var(--display); }
+  .lot .wet { color:var(--berry); }
+  .lot .note { grid-column:2 / 4; color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lot.changed { animation:flash 1.6s ease; }
+  @keyframes flash { 0%, 40% { background:var(--hay-pale); } 100% { background:transparent; } }
+  .in_stock { background:var(--paddock); color:var(--muted); } .reserved { background:var(--hay-pale); color:#7A5410; }
+  .ordered { background:var(--dam-pale); color:var(--dam); }
+  .mail { padding:9px 0; border-top:1px solid var(--line); font-size:13px; }
+  .mail:first-of-type { border-top:none; }
+  .mail p { margin:2px 0 0; color:var(--muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+  /* the CEO agent's desk */
+  .desk { display:flex; gap:20px; align-items:flex-start; }
+  .desk h1 { font-size:30px; line-height:1.15; max-width:24ch; }
+  .ask { margin-top:6px; max-width:62ch; }
+  .examples { margin-top:16px; display:flex; flex-wrap:wrap; gap:8px; }
+  .examples button { background:var(--sage-pale); color:var(--gum); border:1px solid transparent; font-size:13px; padding:7px 12px; }
+  .examples button:hover { border-color:var(--sage); }
+  .reply { margin-top:18px; white-space:pre-wrap; max-width:72ch; }
+
+  /* tool calls, shown as they happen */
+  .calls { margin-top:14px; display:flex; flex-direction:column; gap:2px; font:13px/1.5 var(--mono); }
+  .call summary { list-style:none; cursor:pointer; display:flex; gap:8px; align-items:baseline; padding:3px 0; }
+  .call summary::-webkit-details-marker { display:none; }
+  .call .mark { color:var(--sage); width:1ch; flex:none; }
+  .call .name { font-weight:500; }
+  .call .args { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .call .out { margin:0 0 6px 2ch; padding-left:10px; border-left:1px solid var(--line); color:var(--muted);
+               white-space:pre-wrap; overflow-wrap:anywhere; max-height:180px; overflow:auto; }
+  .brief { margin:0 0 6px 2ch; color:var(--muted); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .brief::before { content:"\2514  "; }
+  .call[open] + .brief { display:none; }
+  .call.warn .mark, .call.warn + .brief { color:var(--berry); }
+  .call.new { animation:enter .35s ease both; }
+  .thinking { display:flex; align-items:center; gap:10px; margin-top:14px; color:var(--muted); font-size:14px; }
+  .spin { width:14px; height:14px; border-radius:50%; border:2px solid var(--hay-pale); border-top-color:var(--hay); animation:spin .9s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes enter { from { opacity:0; transform:translateY(4px); } }
+
+  /* the plan */
+  .plan { margin-top:22px; border-top:1px solid var(--line); }
+  .plan h2 { font-size:18px; margin:18px 0 6px; }
+  .step { display:grid; grid-template-columns:auto 1fr; gap:14px; padding:14px 0; border-bottom:1px solid var(--line); }
+  .step:last-child { border-bottom:none; }
+  .step .goal { font-weight:600; }
+  .step .meta { font-size:13px; color:var(--muted); }
+
+  /* the bar */
+  .bar { position:fixed; left:50%; bottom:26px; transform:translateX(-50%); width:min(760px, calc(100% - 40px));
+         display:flex; gap:8px; padding:8px; background:var(--paper); border:1px solid var(--line); border-radius:16px;
+         box-shadow:0 14px 40px rgba(30,43,36,.12); transition:transform .55s cubic-bezier(.6,-.25,.7,1), opacity .5s; }
+  .bar.gone { transform:translate(-50%, 170%); opacity:0; pointer-events:none; }
+  .bar input { flex:1; min-width:0; border:none; outline:none; font:inherit; padding:10px 12px; background:transparent; color:var(--gum); }
+  button { font:500 15px var(--body); border:none; border-radius:11px; padding:10px 18px; cursor:pointer; }
+  .send { background:var(--gum); color:var(--paper); } .approve { background:var(--hay); color:var(--gum); font-weight:600; }
+  button:disabled { opacity:.4; cursor:default; }
+
+  /* working: one lane per task */
+  .working { display:flex; align-items:center; gap:14px; animation:drop .45s ease both; }
+  .working h2 { font-size:18px; }
+  @keyframes drop { from { opacity:0; transform:translateY(-14px); } }
+  .lanes { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:18px; margin-top:18px; align-items:start; }
+  .lane { background:var(--paper); border:1px solid var(--line); border-radius:14px; overflow:hidden;
+          animation:pop .5s cubic-bezier(.2,.9,.3,1.25) both; }
+  @keyframes pop { from { opacity:0; transform:translateY(16px) scale(.96); } }
+  .lane header { display:flex; gap:12px; padding:16px 18px; align-items:flex-start; border-bottom:1px solid var(--line); }
+  .lane header .goal { font-weight:600; line-height:1.35; }
+  .lane header .who { font-size:13px; color:var(--muted); }
+  .lane .feed { padding:10px 18px 16px; max-height:380px; overflow-y:auto; }
+  .lane .feed .calls { margin-top:0; }
+  .note { display:flex; gap:10px; margin:10px 0 4px; font-size:14px; }
+  .note p { margin:0; padding:8px 12px; background:var(--paddock); border-radius:2px 12px 12px 12px; }
+  .badge { margin-left:auto; flex:none; font-size:12px; font-weight:600; padding:3px 10px; border-radius:99px; }
+  .open { background:var(--hay-pale); color:#7A5410; } .done { background:var(--sage-pale); color:#3E5532; }
+  .blocked { background:var(--berry-pale); color:var(--berry); }
+
+  /* done */
+  .seal { width:96px; height:96px; margin:4px auto 14px; border-radius:50%; background:var(--hay); display:grid; place-items:center;
+          animation:pop .6s cubic-bezier(.2,.9,.3,1.4) both; }
+  .seal svg { width:46px; stroke:var(--gum); stroke-width:3.5; fill:none; stroke-dasharray:60; stroke-dashoffset:60; animation:draw .5s .35s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset:0; } }
+  .summary { text-align:center; }
+  .summary h1 { font-size:30px; }
+  .result { display:grid; grid-template-columns:auto 1fr auto; gap:14px; padding:16px 0; border-top:1px solid var(--line); align-items:start; }
+  .flag { margin-top:8px; padding:10px 12px; border-radius:10px; background:var(--berry-pale); color:var(--berry); font-size:14px; }
+  .next { margin-top:22px; text-align:center; }
+
+  @media (max-width:900px) { .layout { grid-template-columns:1fr; } .team { display:none; } }
+  @media (prefers-reduced-motion:reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand"><svg viewBox="0 0 48 48"><rect x="7" y="13" width="34" height="22" rx="3" fill="#F7E7BC" stroke="#1E2B24" stroke-width="2.5"/><path d="M18 13v22M30 13v22" stroke="#1E2B24" stroke-width="2.5"/></svg>Hay Export Agents</div>
+  <div class="team" id="team"></div>
+</div>
+<div class="layout">
+  <main id="stage"></main>
+  <aside class="side">
+    <section class="panel data" id="stock"></section>
+    <section class="panel data" id="inbox"></section>
+    <div class="history" id="history" tabindex="0"></div>
+  </aside>
+</div>
+<form class="bar" id="bar">
+  <button type="button" class="approve" id="approve" hidden>Approve plan</button>
+  <input id="input" placeholder="Tell the CEO agent what needs doing" autocomplete="off" aria-label="Instruction">
+  <button class="send" id="send" aria-label="Send">&uarr;</button>
+</form>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const md = s => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+
+const ART = {   // each agent is drawn as the thing it looks after
+  ceo_agent: `<svg viewBox="0 0 48 48"><ellipse cx="24" cy="31" rx="19" ry="5.5" fill="#E0A82E"/><path d="M13.5 31c0-10 3.5-16 10.5-16s10.5 6 10.5 16z" fill="#E0A82E"/><path d="M14.2 26.5h19.6" stroke="#1E2B24" stroke-width="3"/></svg>`,
+  production_agent: `<svg viewBox="0 0 48 48"><rect x="8" y="14" width="32" height="21" rx="3" fill="#F7E7BC" stroke="#7A5410" stroke-width="2"/><path d="M19 14v21M29 14v21" stroke="#7A5410" stroke-width="2.5"/><path d="M11 20h4M22 26h4M32 21h5M11 30h4M32 30h4" stroke="#C99A3A" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  procurement_agent: `<svg viewBox="0 0 48 48"><rect x="5" y="25" width="22" height="7" rx="1" fill="#FBFCF8"/><path d="M27 32V19h8l7 7v6z" fill="#FBFCF8"/><path d="M29.5 21.5h4.5l3.5 3.5h-8z" fill="#2F6B8A"/><rect x="8" y="18" width="15" height="7" rx="1.5" fill="#F7E7BC"/><circle cx="12" cy="33.5" r="4" fill="#1E2B24" stroke="#FBFCF8" stroke-width="2"/><circle cx="35" cy="33.5" r="4" fill="#1E2B24" stroke="#FBFCF8" stroke-width="2"/></svg>`,
+  coordinator: `<svg viewBox="0 0 48 48"><path d="M16 11v28" stroke="#FBFCF8" stroke-width="3" stroke-linecap="round"/><path d="M17.5 12h17l-4.5 6 4.5 6h-17z" fill="#F7E7BC"/></svg>`,
+};
+const NAMES = {ceo_agent: "CEO", production_agent: "Production", procurement_agent: "Procurement", coordinator: "Coordinator"};
+const JOBS = {ceo_agent: "Plans the work", production_agent: "Looks after the sheds", procurement_agent: "Buys from growers", coordinator: "Keeps tasks moving"};
+const fig = (name, size = "") => `<span class="fig ${size} ${name}" title="${NAMES[name] || name}">${ART[name] || ""}</span>`;
+const EXAMPLE = "Saigon Dairy Co. needs 500 t of Vietnam-spec oaten hay (moisture at most 13%) by 15 Dec. Sort it out.";
+
+let instruction = "", phase = "start", seenCalls = new Set(), shownLanes = new Set(), ceoTimer = null;
+
+async function post(url, body) {
+  const r = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)});
+  return r.json();
+}
+const getState = async () => (await fetch("/tasks")).json();
+
+/* the team strip: who is working right now */
+function team(activeNames = [], status = {}) {
+  $("team").innerHTML = Object.keys(NAMES).map(n => `<div class="member ${activeNames.includes(n) ? "active" : ""}">
+    ${fig(n)}<div><b>${NAMES[n]}</b><small>${status[n] || (activeNames.includes(n) ? "Working" : JOBS[n])}</small></div></div>`).join("");
+}
+
+/* one tool call, the way Codex shows it: a line you can open for the result */
+function args(json) {
+  try { return Object.entries(JSON.parse(json)).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join(", "); } catch { return ""; }
+}
+function brief(text) {
+  if (text.startsWith("WARNING")) return "Prompt injection found: passed on as information only";
+  if (text.startsWith("---")) return "Skill loaded";
+  try { const r = JSON.parse(text).result ?? JSON.parse(text);
+        return Array.isArray(r) ? `${r.length} rows` : typeof r === "string" ? r : Object.keys(r).length + " fields"; }
+  catch { return text.split("\n")[0]; }
+}
+function call(c) {
+  const key = c.rowid ?? `${c.actor}${c.tool}${c.args}${c.result}`, fresh = !seenCalls.has(key);
+  seenCalls.add(key);
+  const warn = c.result.startsWith("WARNING");
+  return `<details class="call ${warn ? "warn" : ""} ${fresh ? "new" : ""}"><summary><span class="mark">${warn ? "!" : "&check;"}</span>
+    <span class="name">${esc(c.tool)}</span><span class="args">(${esc(args(c.args))})</span></summary>
+    <div class="out">${esc(c.result)}</div></details><div class="brief">${esc(brief(c.result))}</div>`;
+}
+
+/* screens */
+function desk(inner = "") {
+  $("stage").innerHTML = `<section class="panel"><div class="desk">${fig("ceo_agent", "lg")}<div style="min-width:0;flex:1">
+    ${instruction ? `<h2 style="font-size:20px">${esc(instruction)}</h2>` :
+      `<h1>What needs doing?</h1><p class="ask muted">Give the CEO agent an instruction. It checks the stock and the inbox, plans the work, and waits for your approval before the team starts.</p>
+       <div class="examples"><button type="button" id="example">${esc(EXAMPLE)}</button></div>`}
+    <div class="calls" id="ceo-calls"></div>${inner}</div></div></section>`;
+  if ($("example")) $("example").onclick = () => { $("input").value = EXAMPLE; $("input").focus(); };
+}
+
+function thinking(on) {
+  for (const id of ["approve", "send", "input"]) $(id).disabled = on;
+  document.querySelector(".thinking")?.remove();
+  clearInterval(ceoTimer);
+  if (!on) return team();
+  team(["ceo_agent"], {ceo_agent: "Planning"});
+  document.querySelector(".desk > div").insertAdjacentHTML("beforeend", `<div class="thinking"><span class="spin"></span>Thinking</div>`);
+  ceoTimer = setInterval(showCeoCalls, 700);
+}
+async function showCeoCalls() {
+  const s = await getState();
+  data(s);
+  if ($("ceo-calls")) $("ceo-calls").innerHTML = s.ceo.map(call).join("");
+}
+
+function showReply(r) {
+  const plan = r.plan.map(t => `<div class="step">${(t.agents || []).map(a => fig(a, "sm")).join("")}<div>
+      <div class="goal">${esc(t.goal)}</div><div class="meta">Done when ${esc(t.completion_criteria)}. Due ${esc(t.deadline)}.</div></div></div>`);
+  thinking(false);
+  const calls = $("ceo-calls").innerHTML;
+  desk(`<div class="reply">${md(r.text)}</div>` + (plan.length ? `<div class="plan"><h2>Plan</h2>${plan.join("")}</div>` : ""));
+  $("ceo-calls").innerHTML = calls;
+  $("approve").hidden = !plan.length;
+  $("input").placeholder = plan.length ? "Or say what to change" : "Reply to the CEO agent";
+}
+
+$("bar").onsubmit = async e => {
+  e.preventDefault();
+  const text = $("input").value.trim();
+  if (!text) return;
+  $("input").value = "";
+  if (!instruction) { instruction = text; desk(); thinking(true); showReply(await post("/instruction", {text})); }
+  else { thinking(true); showReply(await post("/answer", {approve: false, text})); }
+};
+
+$("approve").onclick = async () => {
+  thinking(true);
+  await post("/answer", {approve: true});
+  thinking(false);
+  working();
+};
+
+function working() {
+  $("bar").classList.add("gone");                       // the bar steps out of the way while the team works
+  $("stage").innerHTML = `<section class="panel working"><span class="spin" style="width:22px;height:22px"></span><div>
+    <h2>The team is working</h2><div class="muted">${esc(instruction)}</div></div></section><div class="lanes" id="lanes"></div>`;
+  shownLanes = new Set();
+  poll();
+}
+
+function lane(t) {
+  const agents = t.agents.split(",");
+  const notes = (t.progress || "").trim().split("\n").filter(Boolean)
+    .map(p => `<div class="note">${fig(agents[0], "sm")}<p>${esc(p)}</p></div>`);
+  return `<header>${agents.map(a => fig(a)).join("")}<div style="min-width:0">
+      <div class="goal">${esc(t.goal)}</div><div class="who">Task ${t.id}, ${agents.map(a => NAMES[a] || a).join(" and ")}</div></div>
+      <span class="badge ${t.status}">${t.status[0].toUpperCase() + t.status.slice(1)}</span></header>
+    <div class="feed"><div class="calls">${t.log.map(call).join("") || `<div class="muted" style="font-family:var(--body)">Waiting to start</div>`}</div>${notes.join("")}</div>`;
+}
+
+async function poll() {
+  const s = await getState();
+  data(s);
+  for (const t of s.tasks) {
+    if (!shownLanes.has(t.id)) {                       // lanes arrive one after another
+      shownLanes.add(t.id);
+      $("lanes").insertAdjacentHTML("beforeend", `<section class="lane" id="lane-${t.id}" style="animation-delay:${shownLanes.size * 150}ms"></section>`);
+    }
+    const el = $(`lane-${t.id}`), feed = el.querySelector(".feed");
+    const atEnd = !feed || feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 30;
+    const open = [...el.querySelectorAll("details[open]")].map(d => d.querySelector(".name").textContent);
+    el.innerHTML = lane(t);
+    el.querySelectorAll("details").forEach(d => { if (open.includes(d.querySelector(".name").textContent)) d.open = true; });
+    if (atEnd) el.querySelector(".feed").scrollTop = 1e9;
+  }
+  const busy = s.tasks.find(t => t.status === "open" && t.log.length), finished = {};
+  for (const t of s.tasks) if (t.status === "done") for (const a of t.agents.split(",")) finished[a] = "Done";
+  team(s.working ? [...(busy ? busy.agents.split(",") : []), "coordinator"] : [], finished);
+  if (s.working || !s.tasks.length) return setTimeout(poll, 900);
+  done(s.tasks);
+}
+
+function done(tasks) {
+  const ok = tasks.every(t => t.status === "done");
+  const tokens = tasks.reduce((n, t) => n + t.tokens, 0).toLocaleString();
+  $("stage").innerHTML = `<section class="panel"><div class="summary">
+      ${ok ? `<div class="seal"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>` : ""}
+      <h1>${ok ? "Done" : "Some tasks need you"}</h1><p class="muted">${esc(instruction)}</p></div>
+    ${tasks.map(t => `<div class="result">${fig(t.agents.split(",")[0])}<div><b>${esc(t.goal)}</b>
+        <div class="muted">${esc((t.progress || "").trim().split("\n").pop())}</div>
+        ${t.exceptions ? `<div class="flag">${esc(t.exceptions.trim())}</div>` : ""}</div>
+        <span class="badge ${t.status}">${t.status[0].toUpperCase() + t.status.slice(1)}</span></div>`).join("")}
+    <p class="muted" style="text-align:center;font-size:13px">${tasks.length} tasks used ${tokens} tokens.</p>
+    <div class="next"><button class="send" id="next">Give the next instruction</button></div></section>`;
+  $("next").onclick = async () => { await post("/next", {}); start(); };
+}
+
+const BALE = `<svg viewBox="0 0 48 48"><rect x="6" y="12" width="36" height="24" rx="3" fill="#F7E7BC" stroke="#7A5410" stroke-width="2"/><path d="M18 12v24M30 12v24" stroke="#7A5410" stroke-width="2.5"/></svg>`;
+const STATUS = {in_stock: "In the shed", reserved: "Reserved", ordered: "Ordered"};
+let lastLots = {};
+function data(s) {                                      // the company data, changing as the agents work
+  const lots = s.stock.sort((a, b) => (a.status === "ordered") - (b.status === "ordered") || a.lot_id.localeCompare(b.lot_id));
+  $("stock").innerHTML = `<h2>Shed stock</h2>` + lots.map(l => {
+    const changed = lastLots[l.lot_id] && lastLots[l.lot_id] !== JSON.stringify(l) || (Object.keys(lastLots).length && !lastLots[l.lot_id]);
+    return `<div class="lot ${changed ? "changed" : ""}">${BALE}<b>${esc(l.lot_id)}</b><span class="tonnes">${l.tonnes} t</span>
+      <span class="${l.moisture > 13 ? "wet" : "muted"}">${l.moisture}% moisture</span>
+      <span class="badge ${l.status}" style="margin:0">${STATUS[l.status] || esc(l.status)}</span>
+      ${l.note ? `<div class="note" title="${esc(l.note)}">${esc(l.note)}</div>` : ""}</div>`;
+  }).join("");
+  lastLots = Object.fromEntries(s.stock.map(l => [l.lot_id, JSON.stringify(l)]));
+  $("inbox").innerHTML = `<h2>Grower inbox</h2>` + s.inbox.map(m =>
+    `<div class="mail"><b>${esc(m.sender)}</b><p title="${esc(m.body)}">${esc(m.body)}</p></div>`).join("");
+  history(s.history);
+}
+
+function history(items) {
+  $("history").innerHTML = `<h2>Earlier instructions</h2>` +
+    (items.length ? items.slice().reverse().map(i => `<p>${esc(i)}</p>`).join("") : `<p class="muted">None yet</p>`);
+}
+
+async function start() {
+  instruction = ""; seenCalls = new Set();
+  desk(); team();
+  $("bar").classList.remove("gone");
+  $("approve").hidden = true;
+  $("input").placeholder = "Tell the CEO agent what needs doing";
+  for (const id of ["approve", "send", "input"]) $(id).disabled = false;
+  data(await getState());
+  $("input").focus();
+}
+async function resume() {                               // after a refresh, pick up where you were
+  const s = await getState();
+  if (!s.instruction) return start();
+  instruction = s.instruction;
+  data(s);
+  if (s.working || s.tasks.length) return working();
+  desk();
+  if (s.reply) return showReply(s.reply);
+  thinking(true);                                       // the CEO agent is still thinking
+  let r;
+  while (!(r = (await getState()).reply)) await new Promise(ok => setTimeout(ok, 1000));
+  showReply(r);
+}
+resume();
+</script>
+</body>
+</html>
