@@ -1,35 +1,52 @@
-# hay-export-agents
+# Hay Export Agents
 
-A small proof of concept: AI agents for an oaten hay exporter, on **Microsoft Agent Framework**.
-You give an instruction, the CEO agent plans and creates tasks, and each task gets its own
-thread of agents that works until it's done. All data is synthetic.
+A proof of concept for an oaten hay exporter, built with **Microsoft Agent Framework**, **Codex**, and **MCP**.
+Give the CEO agent an instruction, review its plan, and watch the approved tasks run in separate threads. All company data is synthetic.
 
-![Architecture](docs/architecture.png)
+## Watch the demo
 
-## Run it
+[![Play the live demo showing both tasks completed](docs/hay-export-live-demo.jpg)](docs/hay-export-live-demo.mp4)
+
+The live run shows plan approval, agent handoffs, live tool calls, and the safety gate flagging a suspicious grower email. The agents reserve **380 t**, record an order for **120 t**, and flag **LOT-3** for re-drying. [Watch the live app demo (1:25, silent)](docs/hay-export-live-demo.mp4)
+
+See how an instruction moves through the system in the [animated overview (1:33, silent)](docs/hay-export-demo.mp4).
+
+## Quick start
+
+Requires Python 3.11 or later and the Codex CLI. Sign in with your ChatGPT account. No API key is required.
 
 ```bash
-pip install -e ".[dev]"
-codex login                       # once; your ChatGPT sign-in, no API key
-pytest -q                         # no model needed
-
-python -m hayagents.tools reset   # fresh data
-python -m hayagents.web           # then open http://localhost:8000
-python -m hayagents.team          # or in the terminal, e.g. "Saigon Dairy needs 500 t of hay, moisture at most 13%, by 15 Dec."
+python -m pip install -e ".[dev]"
+codex login
+python -m hayagents.tools reset
+python -m hayagents.web
 ```
 
-## How it works
+Open [localhost:8000](http://localhost:8000). The reset command replaces the local database with fresh demo data.
 
-- **Web page (`web.py`, `web.html`):** give an instruction, approve the plan, watch each task's agents
-  work live (tool calls shown as they happen), and see the stock and inbox change on the right.
-- **CEO agent:** reads stock and the inbox, asks you if something is unclear, and proposes its plan as
-  tasks (goal, completion criteria, deadline, agents). Nothing starts until you approve.
-- **Task thread:** each new task runs its agents together, with a small coordinator model, until done.
-  Agents record progress and exceptions on the task and set it done.
-- **Same agent everywhere:** every agent is built by one function; only its row in `AGENTS` differs.
-- **Models:** the CEO and department agents run on the top model; the coordinator on a small one.
-- **MCP:** the company system (`tools.py`) is a separate MCP server. Each agent connects with
-  `allowed_tools` set to its row, which is its permission. At Balco this would be Business Central's
-  MCP server instead.
-- **Gate (`gate.py`):** on every agent: cost cap per task, prompt injection check, output filter
-  (bank details removed), and a log of every tool call on its task.
+Try the instruction from the recording:
+
+> Saigon Dairy Co. needs 500 t of Vietnam-spec oaten hay by 15 Dec 2026. Reserve eligible stock first, then order only the shortfall. Separately, flag LOT-3 for re-drying in its stock note.
+
+For the terminal interface, run `python -m hayagents.team`. Run `pytest -q` to test locally without a model connection.
+
+## How a run works
+
+1. **Give an instruction.** The CEO agent checks stock and grower offers and asks for clarification if needed. Its proposed tasks include completion criteria, deadlines, agent assignments, and model settings.
+2. **Approve the plan.** Independent tasks run in parallel. Dependent steps, such as reserving stock before buying the shortfall, stay together in one task.
+3. **Follow the work.** Each task has a Coordinator. The live cards show which agents are on turn and let you open tool calls to inspect their results.
+4. **Review the outcome.** Check task results, exceptions, and total token use. Open **Workspace details** to see the agents, shed stock, and grower inbox. For a blocked task, **Ask the CEO agent** starts a follow-up instruction.
+
+## Architecture
+
+![Architecture diagram for Hay Export Agents](docs/architecture.png)
+
+| Layer | How it works |
+| --- | --- |
+| Agent instructions | One factory builds every agent from its configuration row, including its role, instructions, tool permissions, and defaults. [Agent setup](hayagents/team.py) |
+| Model routing | The CEO agent selects the model and effort for each agent on a task. The Coordinator uses its configured small model. [Routing](hayagents/team.py) |
+| Skills | Agents load versioned skills for planning orders, checking export specs, reserving stock, choosing growers, and spotting suspicious messages. [Skills](skills/) |
+| MCP and permissions | The mock company system exposes stock, inbox, and task tools over MCP. Each agent connects with a tool allowlist. At Balco, the proposed equivalent is a Business Central MCP server. [MCP server](hayagents/tools.py) |
+| Approval and spending | Task creation requires approval. Procurement has a $50,000 default ordering limit, and a plan can carry a higher approved amount. [Order controls](hayagents/tools.py) |
+| Safety and token limits | Tool results are checked for known prompt-injection patterns and redacted for bank details. A task stops before its next model call once its cumulative usage reaches 1 million tokens. [Gate](hayagents/gate.py) |
+| Observability | Each tool call records the agent, tool, arguments, and a result excerpt. The web UI displays the trace and task progress. [Web UI](hayagents/web.html) |
