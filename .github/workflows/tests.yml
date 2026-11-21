@@ -10,5 +10,3 @@ jobs:
           python-version: "3.12"
       - run: pip install -e ".[dev]"
       - run: pytest -q
-      - name: Replay demo (no model, real MCP server and gate)
-        run: hay demo --replay --yes

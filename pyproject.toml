@@ -11,9 +11,6 @@ dependencies = [
 [project.optional-dependencies]
 dev = ["pytest>=8"]
 
-[project.scripts]
-hay = "hayagents.cli:main"
-
 [tool.setuptools]
 packages = ["hayagents"]
 
