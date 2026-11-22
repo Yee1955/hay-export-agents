@@ -2,17 +2,30 @@
 import json
 import re
 
-from agent_framework import ChatContext, FunctionInvocationContext
+from agent_framework import AgentContext, ChatContext, FunctionInvocationContext
 
 from .tools import q
 
 MAX_TOKENS = 1_000_000                            # per task
+active_turns: dict[object, tuple[int, str]] = {}
 
 
 class Gate:
     def __init__(self, agent, task_id):
         self.agent, self.task_id = agent, task_id
-        self.middleware = [self.cost_cap, self.check_output]
+        self.middleware = [self.track_turn, self.cost_cap, self.check_output]
+
+    async def track_turn(self, ctx: AgentContext, call_next):
+        """Expose the running agent turn for the web view."""
+        if self.task_id is None or ctx.stream:
+            await call_next()
+            return
+        turn = object()
+        active_turns[turn] = self.task_id, self.agent
+        try:
+            await call_next()
+        finally:
+            del active_turns[turn]
 
     async def cost_cap(self, ctx: ChatContext, call_next):
         """Every model call: stop when the task's tokens are used up, then add this call's tokens (the CEO agent has no task)."""
