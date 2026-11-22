@@ -5,11 +5,17 @@ Give the CEO agent an instruction, review its plan, and watch the approved tasks
 
 ## Watch the demo
 
+### Live app demo
+
 https://github.com/user-attachments/assets/ca469711-55ae-4c59-a98a-21965375f203
 
 The live run shows plan approval, agent handoffs, live tool calls, and the safety gate flagging a suspicious grower email. The agents reserve **380 t**, record an order for **120 t**, and flag **LOT-3** for re-drying. [Live demo MP4 (1:25, silent)](docs/hay-export-live-demo.mp4)
 
-See how an instruction moves through the system in the [animated overview (1:33, silent)](docs/hay-export-demo.mp4).
+### Animated overview
+
+https://github.com/user-attachments/assets/3e0f04d0-8807-4ec4-add8-d5aaf1d43e16
+
+See how an instruction moves through the system, from approval and agent assignment to safety checks and the final report. [Animated overview MP4 (1:33, silent)](docs/hay-export-demo.mp4)
 
 ## Quick start
 
